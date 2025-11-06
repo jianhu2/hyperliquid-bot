@@ -1,3 +1,4 @@
+import math
 import time
 import json
 import example_utils
@@ -5,15 +6,14 @@ from hyperliquid.utils import constants
 
 # --- 核心配置参数 ---
 TARGET_USER_ADDRESS = "0x9263c1bd29aa87a118242f3fbba4517037f8cc7a"
-MY_INVESTMENT_USD = 168.88
-TAKE_PROFIT_USD = 4500.0
+MY_INVESTMENT_USD = 288.66
 COIN = "ETH"
 LOOP_SLEEP_SECONDS = 30
 
 # --- 风险控制参数 ---
 LIQUIDATION_WARNING_PERCENT = 10.0
 LIQUIDATION_DANGER_PERCENT = 3.5
-AUTO_CLOSE_PERCENT = 2.0
+AUTO_CLOSE_PERCENT = 1.3
 RISK_COOLDOWN_MINUTES = 5
 
 # --- 全局状态 ---
@@ -164,7 +164,8 @@ def main():
 
             # --- 自身无持仓 => 跟随开仓 ---
             if my_pos is None:
-                sz = round(MY_INVESTMENT_USD / current_price, 5)
+                sz = math.floor((MY_INVESTMENT_USD / current_price) / 0.01) * 0.01
+                print(f"🧮 计算出的开仓数量: {sz:.8f}, 当前价格: {current_price}, 投入USD: {MY_INVESTMENT_USD}")
                 exchange.update_leverage(target_lev, COIN)
                 order = exchange.market_open(COIN, target_is_long, sz, None, 0.01)
                 print(f"✅ 跟随开仓完成: {json.dumps(order)}")
@@ -197,16 +198,11 @@ def main():
                     print(f"⚠️ 持仓方向不一致 -> 平掉当前仓位并调整方向")
                     exchange.market_close(COIN)
                     exchange.update_leverage(target_lev, COIN)
-                    new_sz = round(MY_INVESTMENT_USD / current_price, 5)
+                    new_sz = math.floor((MY_INVESTMENT_USD / current_price) / 0.01) * 0.01
+                    print(f"🧮 计算出的开仓数量: {new_sz:.8f}, 当前价格: {current_price}, 投入USD: {MY_INVESTMENT_USD}")
                     order = exchange.market_open(COIN, target_is_long, new_sz, None, 0.01)
                     print(f"🔁 仓位调整完成: {json.dumps(order)}")
 
-                # --- 达到止盈 ---
-                if my_value >= TAKE_PROFIT_USD:
-                    print(f"🎉 达到止盈 (${my_value:.2f} ≥ ${TAKE_PROFIT_USD}) -> 平仓退出")
-                    res = exchange.market_close(COIN)
-                    print(f"平仓结果: {json.dumps(res)}")
-                    break
 
             print(f"⏳ 等待 {LOOP_SLEEP_SECONDS}s 后继续监控...")
             time.sleep(LOOP_SLEEP_SECONDS)
