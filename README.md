@@ -46,6 +46,11 @@
     ```bash
     pip install hyperliquid-sdk eth-account
     ```
+   或者直接运行依赖包：
+   ```bash
+    pip install -r requirements.txt
+   ```
+    
 
 3.  **账户配置 (`config.json`)**：
     脚本通过 `example_utils.py` 文件来加载您的账户信息。您需要在项目根目录下创建一个名为 `config.json` 的文件，用于存放您的私钥。
